@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atticus vs. West Lake — Game Report</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    background: #0a0e1a;
+    color: #e8eaf0;
+    min-height: 100vh;
+    padding: 28px;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    padding: 32px 28px;
+    background: linear-gradient(135deg, #1a2340 0%, #0d1628 100%);
+    border-radius: 18px;
+    border: 1px solid #2a3a5c;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::after {
+    content: '🏈';
+    position: absolute;
+    font-size: 140px;
+    opacity: 0.04;
+    right: -10px;
+    top: -20px;
+    pointer-events: none;
+  }
+  .header h1 { font-size: 30px; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
+  .header h2 { font-size: 15px; color: #7b9fd4; font-weight: 400; margin-top: 6px; }
+  .badge {
+    display: inline-block;
+    background: #c8a84b;
+    color: #0a0e1a;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-top: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  /* KPI ROW */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .kpi {
+    background: #111827;
+    border: 1px solid #1e2d4a;
+    border-radius: 14px;
+    padding: 22px 14px;
+    text-align: center;
+  }
+  .kpi .num { font-size: 42px; font-weight: 900; line-height: 1; }
+  .kpi .lbl { font-size: 10px; color: #6b7fa3; text-transform: uppercase; letter-spacing: 1.2px; margin-top: 7px; }
+  .kpi.green .num { color: #10b981; }
+  .kpi.red   .num { color: #ef4444; }
+  .kpi.yel   .num { color: #f59e0b; }
+  .kpi.blue  .num { color: #3b82f6; }
+
+  /* TURNOVER ROW */
+  .to-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .to-card {
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+  }
+  .to-card.danger  { background: transparent; }
+  .to-card.warn    { background: transparent; }
+  .to-card.good    { background: transparent; }
+  .to-card .to-num { font-size: 52px; font-weight: 900; line-height: 1; }
+  .to-card.danger .to-num { color: #ef4444; }
+  .to-card.warn   .to-num { color: #f59e0b; }
+  .to-card.good   .to-num { color: #10b981; }
+  .to-card .to-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; margin-top: 6px; opacity: 0.65; }
+
+  /* GRID */
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .full { grid-column: 1 / -1; }
+
+  .card {
+    background: #111827;
+    border: 1px solid #1e2d4a;
+    border-radius: 14px;
+    padding: 22px;
+  }
+  .card h3 {
+    font-size: 11px;
+    font-weight: 700;
+    color: #7b9fd4;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    margin-bottom: 18px;
+  }
+
+  /* STACKED PROPORTION BAR */
+  .prop-section { margin-bottom: 20px; }
+  .prop-row { margin-bottom: 18px; }
+  .prop-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .prop-title { font-size: 13px; font-weight: 700; color: #e8eaf0; }
+  .prop-sub { font-size: 11px; color: #6b7fa3; }
+  .prop-track {
+    width: 100%;
+    height: 36px;
+    background: #1e2d4a;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+  }
+  .prop-seg {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    transition: width 0.3s;
+  }
+  .prop-seg.good  { background: linear-gradient(90deg, #059669, #10b981); }
+  .prop-seg.bad   { background: linear-gradient(90deg, #b91c1c, #ef4444); }
+  .prop-seg.clear { background: linear-gradient(90deg, #1d4ed8, #3b82f6); }
+  .prop-seg.dis   { background: linear-gradient(90deg, #b45309, #f59e0b); }
+  .prop-legend { display: flex; gap: 18px; margin-top: 7px; }
+  .prop-legend .pl { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #9ab0d4; }
+  .prop-legend .pdot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+  /* BAR CHART (pure CSS) */
+  .bar-group { margin-bottom: 12px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .bar-row .bar-label { font-size: 11px; color: #9ab0d4; width: 110px; flex-shrink: 0; }
+  .bar-track { flex: 1; background: #1e2d4a; border-radius: 99px; height: 20px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 700; color: #fff; min-width: 30px; }
+  .bar-fill.green { background: linear-gradient(90deg, #059669, #10b981); }
+  .bar-fill.red   { background: linear-gradient(90deg, #b91c1c, #ef4444); }
+  .bar-fill.blue  { background: linear-gradient(90deg, #1d4ed8, #3b82f6); }
+  .bar-fill.yel   { background: linear-gradient(90deg, #b45309, #f59e0b); }
+  .bar-fill.pur   { background: linear-gradient(90deg, #7e22ce, #a855f7); }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th {
+    background: #1a2340;
+    color: #7b9fd4;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 9px 12px;
+    text-align: center;
+    border: 1px solid #1e2d4a;
+  }
+  td {
+    padding: 9px 12px;
+    border: 1px solid #1e2d4a;
+    text-align: center;
+    font-weight: 600;
+  }
+  td.lh { text-align: left; color: #c8d6f0; font-weight: 700; }
+  .tr-total td { background: #1a2340; color: #e8eaf0; font-weight: 800; }
+  .tc-tot { background: #151e30 !important; color: #c8d6f0; font-weight: 700; }
+  .c-green { color: #10b981; }
+  .c-red   { color: #ef4444; }
+  .c-yel   { color: #f59e0b; }
+
+  /* SNAP BLOCKS */
+  .snap-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .snap-blk { border-radius: 12px; padding: 18px; text-align: center; }
+  .snap-blk.on  { background: linear-gradient(135deg,#064e3b,#065f46); border: 1px solid #10b981; }
+  .snap-blk.off { background: linear-gradient(135deg,#7f1d1d,#991b1b); border: 1px solid #ef4444; }
+  .snap-blk .sr { font-size: 44px; font-weight: 900; }
+  .snap-blk.on .sr  { color: #34d399; }
+  .snap-blk.off .sr { color: #f87171; }
+  .snap-blk .sl { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; opacity: 0.7; margin-top: 4px; }
+  .snap-blk .sd { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 5px; }
+
+  /* INSIGHTS */
+  .insight { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; background: #0d1628; border-radius: 10px; padding: 13px; }
+  .insight .ico { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .insight .txt { font-size: 12px; line-height: 1.55; color: #c8d6f0; }
+  .insight .txt strong { color: #fff; }
+
+  /* SVG donut */
+  .donut-wrap { display: flex; align-items: center; gap: 20px; }
+  .donut-legend { font-size: 12px; }
+  .donut-legend .dl { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .donut-legend .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+  footer { text-align: center; margin-top: 24px; font-size: 10px; color: #2e4060; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>Offensive Film Report</h1>
+  <h2>Skyridge vs. West Lake &nbsp;|&nbsp; September 19, 2026</h2>
+  <div class="badge">30 Offensive Plays Tracked</div>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-row">
+  <div class="kpi green"><div class="num">33%</div><div class="lbl">Overall Success Rate</div></div>
+  <div class="kpi red"><div class="num">4</div><div class="lbl">Turnovers</div></div>
+  <div class="kpi yel"><div class="num">8/30</div><div class="lbl">Bad Snaps</div></div>
+  <div class="kpi blue"><div class="num">12/30</div><div class="lbl">Plays Line Disrupted</div></div>
+</div>
+
+<!-- PROPORTION BARS -->
+<div class="card" style="margin-bottom:20px;">
+  <h3>⚡ Play Quality — Out of 30 Total Plays</h3>
+
+  <div class="prop-row">
+    <div class="prop-header">
+      <span class="prop-title">Snap Quality</span>
+      <span class="prop-sub">22 clean &nbsp;|&nbsp; 8 bad</span>
+    </div>
+    <div class="prop-track">
+      <div class="prop-seg good" style="width:73.3%">22 Clean Snaps (73%)</div>
+      <div class="prop-seg bad" style="width:26.7%">8 Bad (27%)</div>
+    </div>
+    <div class="prop-legend">
+      <div class="pl"><div class="pdot" style="background:#10b981"></div>Clean snap → 41% success rate on those plays</div>
+      <div class="pl"><div class="pdot" style="background:#ef4444"></div>Bad snap → only 12% success rate on those plays</div>
+    </div>
+  </div>
+
+  <div class="prop-row" style="margin-top:18px;">
+    <div class="prop-header">
+      <span class="prop-title">O-Line Disruption</span>
+      <span class="prop-sub">18 clean &nbsp;|&nbsp; 12 disrupted</span>
+    </div>
+    <div class="prop-track">
+      <div class="prop-seg clear" style="width:60%">18 Line Held (60%)</div>
+      <div class="prop-seg dis" style="width:40%">12 Disrupted (40%)</div>
+    </div>
+    <div class="prop-legend">
+      <div class="pl"><div class="pdot" style="background:#3b82f6"></div>Line held → 33% success rate | Run: 100%, Pass: 29%</div>
+      <div class="pl"><div class="pdot" style="background:#f59e0b"></div>Line disrupted → 33% overall, but Run: 0%, Pass: 50%</div>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="grid2">
+
+  <!-- PASS vs RUN OUTCOME -->
+  <div class="card">
+    <h3>🏈 Pass vs. Run — Outcome</h3>
+    <div class="bar-group">
+      <div style="font-size:11px;color:#7b9fd4;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Run Plays (5 total)</div>
+      <div class="bar-row">
+        <div class="bar-label">✅ Successful</div>
+        <div class="bar-track"><div class="bar-fill green" style="width:20%">1</div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">❌ Unsuccessful</div>
+        <div class="bar-track"><div class="bar-fill red" style="width:80%">4</div></div>
+      </div>
+    </div>
+    <div style="border-top:1px solid #1e2d4a;margin:14px 0;"></div>
+    <div class="bar-group">
+      <div style="font-size:11px;color:#7b9fd4;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Pass Plays (25 total)</div>
+      <div class="bar-row">
+        <div class="bar-label">✅ Successful</div>
+        <div class="bar-track"><div class="bar-fill green" style="width:36%">9</div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">❌ Unsuccessful</div>
+        <div class="bar-track"><div class="bar-fill red" style="width:64%">16</div></div>
+      </div>
+    </div>
+    <div style="border-top:1px solid #1e2d4a;margin:14px 0;"></div>
+    <div class="bar-row">
+      <div class="bar-label" style="font-weight:700;color:#fff;">Run Success %</div>
+      <div class="bar-track"><div class="bar-fill yel" style="width:20%">20%</div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label" style="font-weight:700;color:#fff;">Pass Success %</div>
+      <div class="bar-track"><div class="bar-fill blue" style="width:36%">36%</div></div>
+    </div>
+  </div>
+
+  <!-- SNAP QUALITY -->
+  <div class="card">
+    <h3>📏 Snap Quality vs. Outcome</h3>
+    <div class="snap-pair">
+      <div class="snap-blk on">
+        <div class="sr">41%</div>
+        <div class="sl">Snap On</div>
+        <div class="sd">When the snap was clean, the offense converted 9 out of 22 plays successfully</div>
+      </div>
+      <div class="snap-blk off">
+        <div class="sr">12%</div>
+        <div class="sl">Snap Off</div>
+        <div class="sd">When the snap was bad, the offense converted just 1 out of 8 plays — nearly 3× worse</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:#7b9fd4;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">By Play Type</div>
+    <table>
+      <thead>
+        <tr><th></th><th>Snap On</th><th>Snap Off</th><th>Total</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="lh">🏃 Run</td><td>3</td><td>2</td><td class="tc-tot">5</td></tr>
+        <tr><td class="lh">🏈 Pass</td><td>19</td><td>6</td><td class="tc-tot">25</td></tr>
+        <tr class="tr-total"><td class="lh">Total</td><td>22</td><td>8</td><td class="tc-tot">30</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+
+
+  
+
+  <!-- O-LINE BLOCKING EFFICIENCY -->
+  <div class="card full">
+    <h3>🛡️ O-Line Blocking Efficiency</h3>
+    <div class="snap-pair">
+      <div class="snap-blk on">
+        <div class="sr">18</div>
+        <div class="sl">Plays — Line Held</div>
+        <div class="sd">6 of those 18 plays were successful — a <strong>33% success rate</strong>. The one clean run was a gain; pass game converted 5 of 17.</div>
+      </div>
+      <div class="snap-blk off">
+        <div class="sr">12</div>
+        <div class="sl">Plays — Line Disrupted</div>
+        <div class="sd">4 of those 12 plays were successful — also <strong>33% overall</strong>, but the run game went 0 for 4. The QB bailed the line out on 4 of 8 passing plays (50%).</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:#7b9fd4;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Breakdown by Play Type</div>
+    <table>
+      <thead>
+        <tr><th></th><th class="c-green">✅ Success</th><th class="c-red">❌ Fail</th><th>Total Plays</th><th class="c-yel">Rate</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="lh">🏃 Run — Line Held</td><td class="c-green">1</td><td class="c-red">0</td><td>1</td><td style="color:#10b981;font-weight:700;">100%</td></tr>
+        <tr><td class="lh">🏃 Run — Line Disrupted</td><td class="c-green">0</td><td class="c-red">4</td><td>4</td><td style="color:#ef4444;font-weight:700;">0%</td></tr>
+        <tr><td class="lh">🏈 Pass — Line Held</td><td class="c-green">5</td><td class="c-red">12</td><td>17</td><td class="c-yel">29%</td></tr>
+        <tr><td class="lh">🏈 Pass — Line Disrupted</td><td class="c-green">4</td><td class="c-red">4</td><td>8</td><td style="color:#10b981;font-weight:700;">50%</td></tr>
+        <tr class="tr-total"><td class="lh">TOTAL</td><td class="c-green">10</td><td class="c-red">20</td><td>30</td><td class="c-yel">33%</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MASTER MATRIX -->
+  <div class="card full">
+    <h3>📋 Complete Play Matrix — All Dimensions</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th class="c-green">✅ Success</th>
+          <th class="c-red">❌ Fail</th>
+          <th>Snap On</th>
+          <th>Snap Off</th>
+          <th>Line Clear</th>
+          <th>Line Disrupted</th>
+          <th>Turnover</th>
+          <th>Total</th>
+          <th class="c-yel">Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="lh">🏃 Run</td>
+          <td class="c-green">1</td>
+          <td class="c-red">4</td>
+          <td>3</td><td>2</td><td>1</td><td>4</td>
+          <td class="c-red">1</td>
+          <td class="tc-tot">5</td>
+          <td class="c-yel">20%</td>
+        </tr>
+        <tr>
+          <td class="lh">🏈 Pass</td>
+          <td class="c-green">9</td>
+          <td class="c-red">16</td>
+          <td>19</td><td>6</td><td>17</td><td>8</td>
+          <td class="c-red">3</td>
+          <td class="tc-tot">25</td>
+          <td class="c-yel">36%</td>
+        </tr>
+        <tr class="tr-total">
+          <td class="lh">TOTAL</td>
+          <td class="c-green">10</td>
+          <td class="c-red">20</td>
+          <td>22</td><td>8</td><td>18</td><td>12</td>
+          <td class="c-red">4</td>
+          <td class="tc-tot">30</td>
+          <td class="c-yel">33%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div class="card full">
+    <h3>🎯 Key Takeaways</h3>
+    <div class="insight">
+      <div class="ico">⚠️</div>
+      <div class="txt"><strong>Snap quality is the single biggest correctable problem.</strong> Good snaps → 41% success rate. Bad snaps → 12.5%. That's a 3x difference. 8 bad snaps in one game is a lot — this is a center-specific drill rep issue going into next week.</div>
+    </div>
+    <div class="insight">
+      <div class="ico">🛡️</div>
+      <div class="txt"><strong>Run game is completely broken when the line gets disrupted — 0 for 4 (0%).</strong> Pass game actually held at 50% in those same situations. The QB can improvise; a designed run play can't. Worth calling an RPO or QB keeper when you see pressure at the snap.</div>
+    </div>
+    <div class="insight">
+      <div class="ico">🚨</div>
+      <div class="txt"><strong>4 turnovers is the story of this game.</strong> All 3 INTs came from the QB — leaning back, throwing off rhythm, or forcing it into coverage late. The fumble came from a bad snap + line breakdown combo on their own 9-yard line (Play 19). Ball security is the priority.</div>
+    </div>
+    <div class="insight">
+      <div class="ico">📈</div>
+      <div class="txt"><strong>Plays 70–75: 6 straight successful pass plays.</strong> Something clicked — formation, protection, route combos. That's the tape to rewind all the way and break down. If you can replicate that run in the first half, this game looks very different.</div>
+    </div>
+    <div class="insight">
+      <div class="ico">🏃</div>
+      <div class="txt"><strong>Only 5 run plays all game (5:1 pass-heavy ratio).</strong> Either the defense was stacking the box, or the playcall shifted early to compensate — worth noting on film whether the run-pass ratio was scheme or reaction.</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>Cornwallis Game Report &nbsp;•&nbsp; West Lake vs. Atticus &nbsp;•&nbsp; Sept 19, 2026</footer>
+
+</body>
+</html>
